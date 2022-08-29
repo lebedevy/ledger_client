@@ -65,6 +65,9 @@ export default function Login() {
         if (email === 'test@test.com' && password === 'test') {
             res = { status: 200 };
             dispatch(setUser({ email: 'test@test.com' }));
+        } else {
+            setLoginError('Please ensure your password and email are correct');
+            setWaitingRes(false);
         }
 
         // const res = await fetch('/api/users/login', {
