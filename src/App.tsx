@@ -22,6 +22,7 @@ import DesktopSubNav from './components/desktop/DesktopSubNav';
 import UploadExpenses from './pages/UploadExpenses';
 import { css, cx } from 'emotion';
 import { RootState } from './components/typescript/general_interfaces';
+import { DemoBanner } from './components/DemoBanner';
 
 const desktop = css`
     height: calc(100vh - 130px);
@@ -53,6 +54,7 @@ export default function App() {
 
     return (
         <Router>
+            <DemoBanner />
             {user == null ? (
                 <Switch>
                     <Route exact path="/" component={LandingPage} />
