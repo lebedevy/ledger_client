@@ -1,27 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { getCurrencyFormat } from '../utility/utility';
-import SpendingMap from '../components/overview/SpendingMap';
+import { SpendingMap } from '../components/overview/SpendingMap';
 import MaxExpense from '../components/overview/MaxExpense';
 import AddExpenseButton from '../components/AddExpenseButton';
 import DaySummary from '../components/overview/DaySummary';
 import SummaryItem from '../components/SummaryItem';
 import { css } from 'emotion';
 import { flexJustifyCenterCss } from '../components/styling/CommonStyles';
-
-class EmptyCell {
-    constructor(date) {
-        this.date = date;
-        this.amount = 0;
-    }
-}
-
-class PaddingCell {
-    constructor(date) {
-        this.date = date;
-        this.type = 'padding';
-    }
-}
+import { filterData, formatDateToString, groupData } from '../data/util';
+import { RootState } from '../components/typescript/general_interfaces';
+import { DataCell } from '../data/types';
 
 // const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -46,13 +35,13 @@ const errorCss = css`
 
 // Daily Summary
 export default function Overview() {
-    const { start, end } = useSelector((state) => state.date.period);
-    const [data, setData] = useState([]);
+    const { start, end } = useSelector((state: RootState) => state.date.period);
+    const [data, setData] = useState<DataCell[]>([]);
     const [step, setStep] = useState(0);
-    const [max, setMax] = useState(null);
+    const [max, setMax] = useState<{ amount: number; date: string } | null>(null);
     const [average, setAverage] = useState({ length: 0, average: 0, total: 0 });
-    const [error, setError] = useState(null);
-    const [day, setDay] = useState(null);
+    const [error, setError] = useState<string | null>(null);
+    const [day, setDay] = useState<{ date: string } | null>(null);
 
     useEffect(() => {
         // if selected day out of range, reset the daily summary
@@ -64,25 +53,47 @@ export default function Overview() {
     }, [start, end]);
 
     async function fetchDailySummary() {
-        const res = await fetch(`/api/users/expenses/overview?start=${start}&end=${end}`);
+        // `/api/users/expenses/overview?start=${start}&end=${end}`
+        const res = await fetch('/data.json', {
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+        });
+
+        // generateDummyExpenses(new Date('1-1-2021').getTime(), new Date('1-1-2024').getTime());
+
+        // let res = {
+        //     ok: true,
+        //     json: () => {
+        //         return {
+        //             expenses: generateDummyExpenses(
+        //                 new Date(start).getTime(),
+        //                 new Date(end).getTime()
+        //             ),
+        //         };
+        //     },
+        // };
+
         if (res.ok) {
             const data = await res.json();
+            console.log(data);
             if (data.expenses) {
-                return formatData(data.expenses);
+                const resData = filterData(data.expenses, 'date', { min: start, max: end });
+                return formatData(groupData(resData, 'date'));
             }
         }
-        console.error('Error fetching data');
         setError('There was an error fetching your expense data');
     }
 
-    function formatData(data) {
+    function formatData(data: { date: string; amount: number }[]) {
         // Insert zero days in between
         const [yearS, monthS, dayS] = start.split('-');
-        const startDate = new Date(Date.UTC(yearS, monthS - 1, dayS));
+        const startDate = new Date(Date.UTC(parseInt(yearS), parseInt(monthS) - 1, parseInt(dayS)));
         const offsetCount = startDate.getUTCDay();
-        let range = (new Date(end) - (startDate - 86400000)) / 86400000;
+        let range = (new Date(end).getTime() - (startDate.getTime() - 86400000)) / 86400000;
 
-        let result = [];
+        let result: DataCell[] = [];
         let total = 0;
         let max = { amount: 0, date: start };
         for (let i = 0, j = 0; i < range; i++) {
@@ -91,31 +102,29 @@ export default function Overview() {
                 startDate.getUTCMonth(),
                 startDate.getUTCDate() + i
             );
-            let dateStr = `${date.getUTCFullYear()}-${
-                (date.getUTCMonth() < 9 ? '0' : '') + (date.getUTCMonth() + 1)
-            }-${(date.getUTCDate() < 10 ? '0' : '') + date.getUTCDate()}`;
+            let dateStr = formatDateToString(date);
             if (data[j] && data[j]['date'] === dateStr) {
-                result.push(data[j]);
+                result.push({ ...data[j], type: 'data' });
                 max = data[j]['amount'] > max.amount ? data[j] : max;
                 total += data[j]['amount'];
                 j++;
             } else {
-                result.push(new EmptyCell(dateStr));
+                result.push({ date: dateStr, amount: 0, type: 'data' });
             }
         }
 
         // Add padding cells to the front
-        let offset = [];
+        let offset: DataCell[] = [];
         for (let i = 0; i < offsetCount; i++) {
-            offset.push(new PaddingCell());
+            offset.push({ type: 'padding' });
         }
         result.unshift(...offset);
 
         // Add padding cells to the back
         const padding = 7 - (result.length % 7);
         if (padding < 7) {
-            let backPadding = [];
-            for (let i = 0; i < padding; i++) backPadding.push(new PaddingCell());
+            let backPadding: DataCell[] = [];
+            for (let i = 0; i < padding; i++) backPadding.push({ type: 'padding' });
             result.push(...backPadding);
         }
 

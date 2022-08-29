@@ -3,9 +3,11 @@ import clsx from 'clsx';
 import { makeStyles } from '@material-ui/styles';
 import { getCurrencyFormat, getFormatedDate } from '../../utility/utility';
 import { useSelector } from 'react-redux';
+import { DataCell } from '../../data/types';
+import { RootState } from '../typescript/general_interfaces';
 
 const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const dayGrade = ['empty', 'first', 'second', 'third'];
+const dayGrade: Array<keyof ReturnType<typeof useStyles>> = ['empty', 'first', 'second', 'third'];
 const cellSize = 12;
 
 const useStyles = makeStyles({
@@ -74,9 +76,18 @@ const useStyles = makeStyles({
     },
 });
 
-export default function SpendingMap({ data, step, setDay, day }) {
+export const SpendingMap: React.FC<{
+    data: DataCell[];
+    step: number;
+    setDay: React.Dispatch<
+        React.SetStateAction<{
+            date: string;
+        } | null>
+    >;
+    day: { date: string | null } | null;
+}> = ({ data, step, setDay, day }) => {
     const classes = useStyles();
-    const today = useSelector(state => getFormatedDate(state.date.today));
+    const today = useSelector((state: RootState) => getFormatedDate((state.date as any).today));
     return (
         <div className={classes.spendingMap} onClick={() => setDay(null)}>
             <div className={classes.periodContainer}>
@@ -93,7 +104,7 @@ export default function SpendingMap({ data, step, setDay, day }) {
                             <div key={ind} className={clsx(classes.day, classes.paddingDay)} />
                         ) : (
                             <div
-                                onClick={e => {
+                                onClick={(e) => {
                                     e.stopPropagation();
                                     setDay(el);
                                 }}
@@ -125,9 +136,12 @@ export default function SpendingMap({ data, step, setDay, day }) {
             </div>
         </div>
     );
-}
+};
 
-function LegendItem({ cssClass, label }) {
+const LegendItem: React.FC<{ label: string; cssClass: keyof ReturnType<typeof useStyles> }> = ({
+    cssClass,
+    label,
+}) => {
     const classes = useStyles();
     return <div className={clsx(classes.day, classes[cssClass])} title={label} />;
-}
+};

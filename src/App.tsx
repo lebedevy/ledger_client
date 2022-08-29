@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import clsx from 'clsx';
 import { useDispatch, useSelector } from 'react-redux';
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 import { setScreenDimensions } from './redux/actions';
@@ -7,7 +6,6 @@ import { setScreenDimensions } from './redux/actions';
 import AddExpense from './pages/AddExpense';
 import Expenses from './pages/Expenses';
 import ExpensesAggregates from './pages/ExpensesAggregates';
-// import Merge from './pages/Merge';
 import Navbar from './components/desktop/Navbar';
 import Register from './pages/Register';
 import Login from './pages/Login';

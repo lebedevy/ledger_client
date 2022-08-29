@@ -3,8 +3,10 @@ import { Button, Link } from '@material-ui/core';
 import { makeStyles } from '@material-ui/styles';
 import { EmailInput, PasswordInput } from '../components/ContainedInput';
 import LoadingBackdrop from '../components/landing/LoadingBackdrop';
+import { useHistory } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../redux/actions';
 
-// const backgroundImage = '/images/fabian-blank-pElSkGRA2NU-unsplash.jpg';
 const backgroundImage = '/images/fabian-blank-pElSkGRA2NU-unsplash-min.jpg';
 
 const useStyles = makeStyles({
@@ -38,41 +40,57 @@ const useStyles = makeStyles({
     },
 });
 
-export default function Login({ history }) {
+export default function Login() {
+    const history = useHistory();
     const [waitingRes, setWaitingRes] = useState(false);
     const [loaded, setLoaded] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loginError, setLoginError] = useState(null);
+    const [loginError, setLoginError] = useState<string>();
     const classes = useStyles();
+    const dispatch = useDispatch();
 
     useEffect(() => setLoaded(true), []);
 
-    async function submit(e) {
+    async function submit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        setWaitingRes(true);
         if (email === '' || password === '') {
             setLoginError('Please ensure all fields are filled out');
             return;
         }
-        setWaitingRes(true);
-        const res = await fetch('/api/users/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
-        if (res.status === 200) history.go('/users/login');
-        else {
-            if (res.status === 400)
+
+        let res = { status: 400 };
+
+        if (email === 'test@test.com' && password === 'test') {
+            res = { status: 200 };
+            dispatch(setUser({ email: 'test@test.com' }));
+        }
+
+        // const res = await fetch('/api/users/login', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ email, password }),
+        // });
+
+        switch (res.status) {
+            case 200:
+                history.push('/users/login');
+                break;
+            case 400:
                 setLoginError('Please ensure your password and email are correct');
-            if (res.status === 500) setLoginError('Server error. Please try again later.');
-            setWaitingRes(false);
+                break;
+            case 500:
+                setLoginError('Server error. Please try again later.');
+                setWaitingRes(false);
+                break;
         }
     }
 
     return (
-        <form className={classes.container} onSubmit={e => submit(e)}>
+        <form className={classes.container} onSubmit={submit}>
             <LoadingBackdrop waitingRes={waitingRes} />
-            {loaded ? (
+            {loaded && (
                 <div className={classes.background}>
                     <img
                         style={{ display: 'none' }}
@@ -81,11 +99,11 @@ export default function Login({ history }) {
                         alt="Piggy bank"
                     />
                 </div>
-            ) : null}
+            )}
             <h2>Login</h2>
-            <EmailInput value={email} update={value => setEmail(value)} />
-            <PasswordInput value={password} update={value => setPassword(value)} />
-            {loginError ? <label className={classes.error}>{loginError}</label> : null}
+            <EmailInput value={email} update={(value) => setEmail(value)} />
+            <PasswordInput value={password} update={(value) => setPassword(value)} />
+            {loginError && <label className={classes.error}>{loginError}</label>}
             <Button
                 disabled={waitingRes}
                 className={classes.button}
