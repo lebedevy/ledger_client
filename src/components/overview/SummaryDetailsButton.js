@@ -14,7 +14,6 @@ const useStyles = makeStyles({
         alignItems: 'center',
         '& label': {
             fontSize: '0.9em',
-            // fontStyle: 'italic',
         },
         '& button': {
             background: '#E6E8E6',
@@ -46,7 +45,7 @@ function SummaryDetailsButton({ expanded, setExpanded, mobile }) {
     );
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
     const { mobile } = state.screen;
     return { mobile };
 };

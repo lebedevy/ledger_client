@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { getCurrencyFormat } from '../utility/utility';
 import { SpendingMap } from '../components/overview/SpendingMap';
-import MaxExpense from '../components/overview/MaxExpense';
+import { MaxExpense } from '../components/overview/MaxExpense';
 import AddExpenseButton from '../components/AddExpenseButton';
-import DaySummary from '../components/overview/DaySummary';
+import { DaySummary } from '../components/overview/DaySummary';
 import SummaryItem from '../components/SummaryItem';
 import { css } from 'emotion';
 import { flexJustifyCenterCss } from '../components/styling/CommonStyles';
@@ -63,21 +63,8 @@ export default function Overview() {
 
         // generateDummyExpenses(new Date('1-1-2021').getTime(), new Date('1-1-2024').getTime());
 
-        // let res = {
-        //     ok: true,
-        //     json: () => {
-        //         return {
-        //             expenses: generateDummyExpenses(
-        //                 new Date(start).getTime(),
-        //                 new Date(end).getTime()
-        //             ),
-        //         };
-        //     },
-        // };
-
         if (res.ok) {
             const data = await res.json();
-            console.log(data);
             if (data.expenses) {
                 const resData = filterData(data.expenses, 'date', { min: start, max: end });
                 return formatData(groupData(resData, 'date'));

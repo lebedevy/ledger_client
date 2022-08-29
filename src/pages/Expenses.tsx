@@ -10,6 +10,7 @@ import { useLocation, useHistory } from 'react-router-dom';
 import { css } from 'emotion';
 import { RootState, IExpense } from '../components/typescript/general_interfaces';
 import TableWrapper from '../components/expense_select/TableWrapper';
+import { APIData, filterData } from '../data/util';
 
 // background: '#00000020',
 // width: '100vh',
@@ -32,9 +33,10 @@ const orderDir = ['asc', 'desc'];
 
 function useUrlSearch() {
     const location = useLocation();
-    const [sort, order] = useMemo(() => getSortIndexes(optionsLower, ...getSort(location.search)), [
-        location,
-    ]);
+    const [sort, order] = useMemo(
+        () => getSortIndexes(optionsLower, ...getSort(location.search)),
+        [location]
+    );
     return [sort, order];
 }
 
@@ -42,7 +44,7 @@ export default function Expenses() {
     const location = useLocation();
     const history = useHistory();
     const [sort, order] = useUrlSearch();
-    const [expenses, setExpenses] = useState<Array<IExpense>>([]);
+    const [expenses, setExpenses] = useState<Array<APIData>>([]);
     const [openSort, setOpenSort] = useState(false);
 
     const { width, height, start, end, deleteIds } = useSelector((state: RootState) => {
@@ -76,22 +78,25 @@ export default function Expenses() {
 
     const fetchExpenses = async () => {
         console.info('Getting expenses');
-        const res = await fetch(
-            `/api/users/expenses/summary?start=${start}&end=${end}&sort=${
-                optionsLower[sort as any]
-            }&order=${orderDir[order as any]}`
-        );
+        // `/api/users/expenses/summary?start=${start}&end=${end}&sort=${
+        //     optionsLower[sort as any]
+        // }&order=${orderDir[order as any]}`
+        const res = await fetch('/data.json', {
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+        });
         if (res.status === 200) {
             const data = await res.json();
-            setExpenses(data.expenses);
+            const resultData = filterData(data.expenses, 'date', { min: start, max: end });
+            setExpenses(resultData);
         } else {
             console.error('Error fetching results');
         }
     };
 
     const deleteExpenses = async () => {
-        // Make sure the correct expense is being deleted
-        // call api to remove
         const res = await fetch(`/api/users/expenses/delete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -130,9 +135,11 @@ export default function Expenses() {
             <TableWrapper>
                 {expenses?.length === 0 && <label>No recorded expenses</label>}
                 {expenses &&
-                    expenses.map((el: IExpense) => {
+                    expenses.map((el: APIData, index) => {
                         total += el.amount;
-                        return <EditableRow key={el.id} expense={el} refetch={fetchExpenses} />;
+                        return (
+                            <EditableRow key={index} expense={el as any} refetch={fetchExpenses} />
+                        );
                     })}
                 {!expenses && <LoadingComponent />}
             </TableWrapper>

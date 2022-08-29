@@ -1,4 +1,4 @@
-type APIData = { date: string; amount: number; store: string };
+export type APIData = { date: string; amount: number; store: string };
 
 const stores = ["Dick's Sporting Goods", 'Hudson Bay Company', 'JCPenney', '7/11', 'Kmart'];
 
@@ -27,10 +27,16 @@ export const filterData = (
     field: 'date',
     { min, max, equals }: { min?: string; max?: string; equals?: string }
 ) => {
-    if (min && max) {
-        return data.filter(
-            (d) => d[field].localeCompare(min) >= 0 && d[field].localeCompare(max) <= 1
+    if (equals) {
+        const result = data.filter((d) => d[field] === equals);
+        result.sort((a, b) => a[field].localeCompare(b[field]));
+        return result;
+    } else if (min && max) {
+        const result = data.filter(
+            (d) => d[field].localeCompare(min) >= 0 && d[field].localeCompare(max) <= 0
         );
+        result.sort((a, b) => a[field].localeCompare(b[field]));
+        return result;
     }
 
     return data;
