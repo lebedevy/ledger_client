@@ -44,8 +44,8 @@ export default function Login() {
     const history = useHistory();
     const [waitingRes, setWaitingRes] = useState(false);
     const [loaded, setLoaded] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('test@test.com');
+    const [password, setPassword] = useState('test');
     const [loginError, setLoginError] = useState<string>();
     const classes = useStyles();
     const dispatch = useDispatch();
